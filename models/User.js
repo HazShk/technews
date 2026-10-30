@@ -1,68 +1,63 @@
-//Grab two things from the Sequelize package
-const { Model, DataTypes } = require("sequelize");
-//bcrypt password hashing
-const bcrypt = require("bcrypt");
-//Connection we built
-const sequelize = require("../config/connection");
+const { Model, DataTypes } = require('sequelize');
+const bcrypt = require('bcrypt');
+const sequelize = require('../config/connection');
 
-//the blueprint, User borrows everything from Model
+// create our User model
 class User extends Model {
-  //setup method to run on data(per user) to check password
-  checkPassword(loginPW) {
-    return bcrypt.compareSync(loginPW, this.password);
+  // set up method to run on instance data (per user) to check password
+  checkPassword(loginPw) {
+    return bcrypt.compareSync(loginPw, this.password);
   }
 }
 
-// DESCRIBE THE TABLE
+// create fields/columns for User model
 User.init(
   {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: true
     },
     username: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: false
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true,
-      },
+        isEmail: true
+      }
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [4],
-      },
-    },
+        len: [4]
+      }
+    }
   },
   {
     hooks: {
-      //before a new user is saved, blend their password
+      // set up beforeCreate lifecycle "hook" functionality
       async beforeCreate(newUserData) {
         newUserData.password = await bcrypt.hash(newUserData.password, 10);
         return newUserData;
       },
-      //before a user is updated, blend their password
+
       async beforeUpdate(updatedUserData) {
-        updatedUserData.password = await bcrypt.hash(
-          updatedUserData.password,
-          10,
-        );
+        updatedUserData.password = await bcrypt.hash(updatedUserData.password, 10);
         return updatedUserData;
-      },
+      }
     },
     sequelize,
-    timestamps: false, // don't add createdAt / updatedAt columns
+    timestamps: false,
     freezeTableName: true,
-    underscored: true, // use comment_text style, not commentText
-    modelName: "user",
-  },
+    underscored: true,
+    modelName: 'user'
+  }
 );
+
 module.exports = User;
